@@ -4,7 +4,7 @@
 
 1. You need aws user account which has permission to operate necessary aws resource.
 2. Keep both secret key and access key.
-3. [Subscribe Kali Linux on AWS Marketplace](https://aws.amazon.com/marketplace/server/procurement?productId=8b7fdfe3-8cd5-43cc-8e5e-4e0e7f4139d5)
+3. [Subscribe Kali Linux on AWS Marketplace](https://aws.amazon.com/marketplace/pp/prodview-fznsw3f7mq7to?sr=0-1&ref_=beagle&applicationId=AWSMPContessa)
 4. Change a part of `main.tf`
 
 ```terraform
@@ -39,5 +39,5 @@ $ ssh -i ./terraform-htbkali-keypair.id_rsa kali@[ip-address]
 
 ## More Information
 
-Reference1: [offensive-terraform / terraform-aws-ec2-kali-linux](https://github.com/offensive-terraform/terraform-aws-ec2-kali-linux)
-Reference2: [AWS環境にKali Linuxを建てて遊ぶ方法](https://chikoblog.hatenablog.jp/entry/2020/12/07/112518)
+* Reference1: [offensive-terraform/terraform-aws-ec2-kali-linux](https://github.com/offensive-terraform/terraform-aws-ec2-kali-linux)
+* Reference2: [AWS環境にKali Linuxを建てて遊ぶ方法](https://chikoblog.hatenablog.jp/entry/2020/12/07/112518)
