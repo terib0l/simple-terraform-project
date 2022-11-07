@@ -29,51 +29,63 @@ variable "region" {
   default = "ap-northeast-1"
 }
 
+variable "instance_type" {
+  type = string
+  description = "(Optinal) The type of instance"
+  default = "t2.medium"
+}
+
+variable "volume_size" {
+  type = string
+  description = "(Optinal) The size of the volume in gibibytes(GiB)"
+  default = "50"
+}
+
 # ------------------------
 # VPC Config
 # ------------------------
 # VPC
-resource "aws_vpc" "handson_vpc" {
+resource "aws_vpc" "htbkali_vpc" {
   cidr_block = "10.0.0.0/16"
   enable_dns_hostnames = true  # Enable DNS Host Name
   tags = {
-    Name = "terraform-handson-vpc"
+    Name = "terraform-htbkali-vpc"
   }
 }
 
 # Subnet
-resource "aws_subnet" "handson_public_1a_sn" {
-  vpc_id = aws_vpc.handson_vpc.id
+resource "aws_subnet" "htbkali_public_1a_sn" {
+  vpc_id = aws_vpc.htbkali_vpc.id
   cidr_block = "10.0.1.0/24"
   availability_zone = "${var.az_a}"
   tags = {
-    Name = "terraform-handson-public-1a-sn"
+    Name = "terraform-htbkali-public-1a-sn"
   }
 }
 
 # Internet Gateway
-resource "aws_internet_gateway" "handson_igw" {
-  vpc_id = aws_vpc.handson_vpc.id
+resource "aws_internet_gateway" "htbkali_igw" {
+  vpc_id = aws_vpc.htbkali_vpc.id
   tags = {
-    Name = "terraform-handson-igw"
+    Name = "terraform-htbkali-igw"
   }
 }
 
 # Route Table
-resource "aws_route_table" "handson_public_rt" {
-  vpc_id = aws_vpc.handson_vpc.id
+resource "aws_route_table" "htbkali_public_rt" {
+  vpc_id = aws_vpc.htbkali_vpc.id
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.handson_igw.id
+    gateway_id = aws_internet_gateway.htbkali_igw.id
   }
   tags = {
-    Name = "terraform-handson-public-rt"
+    Name = "terraform-htbkali-public-rt"
   }
 }
 
-resource "aws_route_table_association" "handson_public_rt_associate" {
-  subnet_id = aws_subnet.handson_public_1a_sn.id
-  route_table_id = aws_route_table.handson_public_rt.id
+resource "aws_route_table_association" "htbkali_public_rt_associate" {
+  subnet_id = aws_subnet.htbkali_public_1a_sn.id
+  route_table_id = aws_route_table.htbkali_public_rt.id
 }
 
 # Security Group
@@ -90,12 +102,12 @@ locals {
   allowed_cidr = (var.allowed_cidr == null) ? "${local.myip}/32" : var.allowed_cidr
 }
 
-resource "aws_security_group" "handson_ec2_sg" {
-  name = "terraform-handson-ec2-sg"
+resource "aws_security_group" "htbkali_ec2_sg" {
+  name = "terraform-htbkali-ec2-sg"
   description = "For EC2 Linux"
-  vpc_id = aws_vpc.handson_vpc.id
+  vpc_id = aws_vpc.htbkali_vpc.id
   tags = {
-    Name = "terraform-handson-ec2-sg"
+    Name = "terraform-htbkali-ec2-sg"
   }
 
   ingress {
@@ -118,10 +130,10 @@ resource "aws_security_group" "handson_ec2_sg" {
 # ------------------------
 # Key Pair
 variable "key_name" {
-  default = "terraform-handson-keypair"
+  default = "terraform-htbkali-keypair"
 }
 
-resource "tls_private_key" "handson_private_key" {
+resource "tls_private_key" "htbkali_private_key" {
   algorithm = "RSA"
   rsa_bits = 2048
 }
@@ -131,40 +143,38 @@ locals {
   private_key_file = "/home/vagrant/tf/${var.key_name}.id_rsa"
 }
 
-resource "local_file" "handson_private_key_pem" {
+resource "local_file" "htbkali_private_key_pem" {
   filename = "${local.private_key_file}"
-  content = "${tls_private_key.handson_private_key.private_key_pem}"
+  content = "${tls_private_key.htbkali_private_key.private_key_pem}"
+  file_permission = "0400"
 }
 
-resource "aws_key_pair" "handson_keypair" {
+resource "aws_key_pair" "htbkali_keypair" {
   key_name = "${var.key_name}"
-  public_key = "${tls_private_key.handson_private_key.public_key_openssh}"
+  public_key = "${tls_private_key.htbkali_private_key.public_key_openssh}"
 }
 
 # EC2
-data "aws_ssm_parameter" "amzn2_latest_ami" {
-  name = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
-}
-
-resource "aws_instance" "handson_ec2" {
-  ami = data.aws_ssm_parameter.amzn2_latest_ami.value
-  instance_type = "t2.micro"
+resource "aws_instance" "htbkali_ec2" {
+  ami = "ami-079a7f1c97ababaaa"
+  instance_type = "${var.instance_type}"
   availability_zone = "${var.az_a}"
-  vpc_security_group_ids = [aws_security_group.handson_ec2_sg.id]
-  subnet_id = aws_subnet.handson_public_1a_sn.id
-  associate_public_ip_address = "true"
+  vpc_security_group_ids = [aws_security_group.htbkali_ec2_sg.id]
+  subnet_id = aws_subnet.htbkali_public_1a_sn.id
+  associate_public_ip_address = true
   key_name = "${var.key_name}"
   tags = {
-    Name = "terraform-handson-ec2"
+    Name = "terraform-htbkali-ec2"
   }
+
+  # root_block_device {
+  #   volume_size = "${var.volume_size}"
+  # }
 }
 
 # ------------------------
 # Output Config
 # ------------------------
-output "ec2_global_ips" {
-  value = "${aws_instance.handson_ec2.*.public_ip}"
-}
-output "my_ip" {
-  value = "${local.myip}"
+output "ssh_ec2_kali_linux_connect" {
+  value = "ssh -i ${local.private_key_file} kali@${aws_instance.htbkali_ec2.public_ip}"
 }
